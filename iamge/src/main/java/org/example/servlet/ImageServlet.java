@@ -3,6 +3,7 @@ package org.example.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.example.dao.ImageDao;
+import org.example.exception.AppException;
 import org.example.model.Image;
 import org.example.util.util;
 
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -38,13 +40,15 @@ public class ImageServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
-
+        //构造要返回的响应结构体，也可创建一个类
+        Map<String,Object> map = new HashMap<>();
         try {
             //1. 解析请求数据
             Part p = req.getPart("uploadImage");
             long size = p.getSize();//获取上传的文件大小
             String contentType = p.getContentType();//获取每个part的数据格式
             String name = p.getSubmittedFileName();//获取上传的文件
+
 
 
             //图片上传时间，数据库是保存的字符串 用日期格式化的类来转换
@@ -60,7 +64,7 @@ public class ImageServlet extends HttpServlet {
             //如何判断 图片已上传 若相同的MD5值 就不能插入数据和保存本地
             int num = ImageDao.queryCount(md5);
             if (num>= 1){
-                throw  new RuntimeException("上传图片重复");
+                throw  new AppException("上传图片重复");
             }
             //2. 根据请求数据完成业务处理
             //TODO
@@ -79,12 +83,19 @@ public class ImageServlet extends HttpServlet {
             image.setPath("/"+md5);
             int n = ImageDao.insert(image);
 
+            map.put("ok",true);
         }catch (Exception e){
             e.printStackTrace();
-            resp.setStatus(500);
+            map.put("ok",false);
+            if (e instanceof AppException){
+                map.put("msg",e.getMessage());
+            }else {
+                map.put("msg","未知错误，请联系管理员");
+            }
+            //resp.setStatus(500);
             //报错可以往body中写错误信息，如果没有，就只能检查日志
         }
-
+        //ok(resp);
         //3. 返回响应数据
         /*ObjectMapper m = new ObjectMapper();
         Map<String,Object> data = new HashMap<>();
@@ -93,6 +104,9 @@ public class ImageServlet extends HttpServlet {
         data.put("name",name);
         String json = m.writeValueAsString(data);
         resp.getWriter().println(json);*/
+
+        String s =util.serialize(map);
+        resp.getWriter().println(s);
     }
 
     @Override
@@ -121,16 +135,23 @@ public class ImageServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setCharacterEncoding("UTD-8");
+        req.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
         String id = req.getParameter("imageId");
         //数据库根据ID删除图片数据
         Image image = ImageDao.queryOne(Integer.parseInt(id));
-
-        //int n = ImageDao.delete(Integer.parseInt(id));
+        int n = ImageDao.delete(Integer.parseInt(id));
         //本地硬盘删除图片文件
+        String  path = IMAGE_DIR+image.getPath();
+        File f = new File(path);
+        f.delete();
+        ok(resp);
+    }
+
+    public static void ok(HttpServletResponse resp) throws IOException {
+        resp.getWriter().println("{\"ok\":true}");
 
     }
 }

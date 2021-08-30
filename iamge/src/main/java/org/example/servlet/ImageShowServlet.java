@@ -11,11 +11,29 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @WebServlet("/imageShow")
 public class ImageShowServlet extends HttpServlet {
+
+    private static final Set<String> whiteList = new HashSet<>();
+    static {
+
+        //白名单允许获取图片内容
+        whiteList.add("http://localhost:8083/java_image_server/index.html");
+        whiteList.add("http://localhost:8083/java_image_server/");
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String referer = req.getHeader("Referer");
+        if (!whiteList.contains(referer)){
+            //白名单里面不包含当前请求的Referer 不允许访问
+            resp.setStatus(403);
+            return;
+        }
         //1.解析请求数据 imageId
         String id = req.getParameter("imageId");
         //2.业务处理 2.1根据ID查询图片path字段 2.2通过path找本地图片文件
@@ -37,5 +55,6 @@ public class ImageShowServlet extends HttpServlet {
         }
         os.flush();
         fis.close();
+        os.close();
     }
 }

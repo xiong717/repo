@@ -127,4 +127,26 @@ public class ImageDao {
         }
 
     }
+
+    public static int delete(int id) {
+        Connection connection = null;
+        PreparedStatement ps = null;
+        try {
+            //获取connection
+            connection = util.getConnection();
+            //获取statement
+            String sql = "delete from image_table where image_id=?";
+            ps = connection.prepareStatement(sql);
+            //获取sql
+            ps.setInt(1,id);
+            return ps.executeUpdate();
+            //如果是查询 处理结果集Resultset
+        } catch (SQLException e) {
+            throw  new RuntimeException("删除图片出错",e);
+        } finally {
+            //释放资源
+            util.close(connection,ps);
+        }
+
+    }
 }

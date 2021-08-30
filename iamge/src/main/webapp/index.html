@@ -122,7 +122,11 @@
                     data: data,
                     // context: this,
                     success: function(data, status) {
-                        app.getImages();
+                       if (data.ok){
+                           app.getImages();
+                       }else {
+                           alert(data.msg);
+                       }
                         // alert("上传成功");
                     },
                     error: function (err, textStatus, throwable) {
@@ -143,7 +147,6 @@
             }
         },
     });
-
     app.getImages();
 </script>
 </body>
