@@ -13,14 +13,6 @@ public class ArticleInfo {
     private int state;
     private int good;
 
-    public int getGood() {
-        return good;
-    }
-
-    public void setGood(int good) {
-        this.good = good;
-    }
-
     public int getId() {
         return id;
     }
@@ -83,5 +75,13 @@ public class ArticleInfo {
 
     public void setState(int state) {
         this.state = state;
+    }
+
+    public int getGood() {
+        return good;
+    }
+
+    public void setGood(int good) {
+        this.good = good;
     }
 }
